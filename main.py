@@ -12,7 +12,7 @@ from keyboards import main_menu
 
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
 WEBHOOK_PATH = f"/webhook/{bot.token}"
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # полный публичный URL, например https://yourapp.onrender.com/webhook/<token>
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # например: https://botwork2.onrender.com/webhook/<token>
 
 dp = Dispatcher()
 
@@ -38,17 +38,17 @@ async def on_startup():
     await bot.set_webhook(WEBHOOK_URL)
     print(f"Webhook set to {WEBHOOK_URL}")
 
-async def on_shutdown(app):
-    # Удаляем webhook при выключении
+async def on_shutdown_handler(app):
+    # Удаляем webhook и закрываем сессию
     await bot.delete_webhook()
     await bot.session.close()
     print("Webhook deleted and bot session closed")
 
-# обработчик для проверки работоспособности сервера
+# Проверка здоровья сервера
 async def handle(request):
     return web.Response(text="OK")
 
-# обработчик вебхуков от Telegram
+# Обработчик вебхуков Telegram
 async def handle_webhook(request):
     if request.match_info.get('token') == bot.token:
         request_body = await request.text()
@@ -59,9 +59,9 @@ async def handle_webhook(request):
         return web.Response(status=403, text="Forbidden")
 
 async def start_web_server():
-    app = web.Application()
-    app.router.add_get("/", handle)  # для проверки здоровья
-    app.router.add_post(WEBHOOK_PATH, handle_webhook)  # основной webhook
+    app = web.Application(on_shutdown=[on_shutdown_handler])
+    app.router.add_get("/", handle)
+    app.router.add_post(WEBHOOK_PATH, handle_webhook)
 
     port = int(os.environ.get("PORT", 8000))
     runner = web.AppRunner(app)
@@ -70,15 +70,12 @@ async def start_web_server():
     await site.start()
     print(f"Web server started on port {port}")
 
-    # Привязываем функцию очистки при выключении сервера
-    app.on_shutdown.append(on_shutdown)
-
     return app
 
 async def main():
     await on_startup()
     await start_web_server()
-    # Просто держим сервер активным, без polling
+    # Держим приложение живым
     while True:
         await asyncio.sleep(3600)
 
