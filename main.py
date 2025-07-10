@@ -9,6 +9,11 @@ from handlers import registration, tasks, admin_panel
 from scheduler import scheduler
 from bot_instance import bot
 from keyboards import main_menu
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
 WEBHOOK_PATH = f"/webhook/{bot.token}"
@@ -34,15 +39,19 @@ async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     scheduler.start()
-    # Устанавливаем webhook
-    await bot.set_webhook(WEBHOOK_URL)
-    print(f"Webhook set to {WEBHOOK_URL}")
+
+    # Устанавливаем вебхук
+    try:
+        await bot.set_webhook(WEBHOOK_URL)
+        logger.info(f"Webhook set to {WEBHOOK_URL}")
+    except Exception as e:
+        logger.error(f"Failed to set webhook: {e}")
 
 async def on_shutdown_handler(app):
     # Удаляем webhook и закрываем сессию
     await bot.delete_webhook()
     await bot.session.close()
-    print("Webhook deleted and bot session closed")
+    logger.info("Webhook deleted and bot session closed")
 
 # Проверка здоровья сервера
 async def handle(request):
@@ -54,8 +63,10 @@ async def handle_webhook(request):
         request_body = await request.text()
         update = Update.parse_raw(request_body)
         await dp.process_update(update)
+        logger.info("Received and processed update.")
         return web.Response(status=200)
     else:
+        logger.warning("Invalid token received.")
         return web.Response(status=403, text="Forbidden")
 
 async def start_web_server():
@@ -71,7 +82,7 @@ async def start_web_server():
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
-    print(f"Web server started on port {port}")
+    logger.info(f"Web server started on port {port}")
 
     return app
 
