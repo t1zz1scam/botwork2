@@ -1,5 +1,6 @@
 import asyncio
 import os
+from aiohttp import web
 from aiogram import Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import Message
@@ -55,9 +56,28 @@ async def on_startup():
         await conn.run_sync(Base.metadata.create_all)
     scheduler.start()
 
+# простой http-сервер для Render (проверка здоровья)
+async def handle(request):
+    return web.Response(text="OK")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", handle)
+    port = int(os.environ.get("PORT", 8000))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    print(f"Web server started on port {port}")
+
 async def main():
     await on_startup()
-    await dp.start_polling(bot)
+
+    # запускаем http-сервер параллельно с polling ботом
+    await asyncio.gather(
+        dp.start_polling(bot),
+        start_web_server()
+    )
 
 if __name__ == "__main__":
     asyncio.run(main())
