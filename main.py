@@ -2,7 +2,7 @@ import asyncio
 import os
 from aiohttp import web
 from aiogram import Dispatcher
-from aiogram.types import Message
+from aiogram.types import Update
 from models import Base, User, RoleEnum
 from db import engine, AsyncSessionLocal
 from handlers import registration, tasks, admin_panel
@@ -11,6 +11,8 @@ from bot_instance import bot
 from keyboards import main_menu
 
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
+WEBHOOK_PATH = f"/webhook/{bot.token}"
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # полный публичный URL, например https://yourapp.onrender.com/webhook/<token>
 
 dp = Dispatcher()
 
@@ -32,14 +34,35 @@ async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     scheduler.start()
+    # Устанавливаем webhook
+    await bot.set_webhook(WEBHOOK_URL)
+    print(f"Webhook set to {WEBHOOK_URL}")
 
-# простой http-сервер для Render (проверка здоровья)
+async def on_shutdown(app):
+    # Удаляем webhook при выключении
+    await bot.delete_webhook()
+    await bot.session.close()
+    print("Webhook deleted and bot session closed")
+
+# обработчик для проверки работоспособности сервера
 async def handle(request):
     return web.Response(text="OK")
 
+# обработчик вебхуков от Telegram
+async def handle_webhook(request):
+    if request.match_info.get('token') == bot.token:
+        request_body = await request.text()
+        update = Update.parse_raw(request_body)
+        await dp.process_update(update)
+        return web.Response(status=200)
+    else:
+        return web.Response(status=403, text="Forbidden")
+
 async def start_web_server():
     app = web.Application()
-    app.router.add_get("/", handle)
+    app.router.add_get("/", handle)  # для проверки здоровья
+    app.router.add_post(WEBHOOK_PATH, handle_webhook)  # основной webhook
+
     port = int(os.environ.get("PORT", 8000))
     runner = web.AppRunner(app)
     await runner.setup()
@@ -47,14 +70,17 @@ async def start_web_server():
     await site.start()
     print(f"Web server started on port {port}")
 
+    # Привязываем функцию очистки при выключении сервера
+    app.on_shutdown.append(on_shutdown)
+
+    return app
+
 async def main():
     await on_startup()
-
-    # запускаем http-сервер параллельно с polling ботом
-    await asyncio.gather(
-        dp.start_polling(bot),
-        start_web_server()
-    )
+    await start_web_server()
+    # Просто держим сервер активным, без polling
+    while True:
+        await asyncio.sleep(3600)
 
 if __name__ == "__main__":
     asyncio.run(main())
