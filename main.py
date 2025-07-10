@@ -59,7 +59,7 @@ async def handle_webhook(request):
         return web.Response(status=403, text="Forbidden")
 
 async def start_web_server():
-    app = web.Application(on_shutdown=[on_shutdown_handler])
+    app = web.Application()
     app.router.add_get("/", handle)
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
 
@@ -69,6 +69,8 @@ async def start_web_server():
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
     print(f"Web server started on port {port}")
+
+    app.on_shutdown.append(on_shutdown_handler)
 
     return app
 
