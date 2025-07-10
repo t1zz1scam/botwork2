@@ -63,14 +63,15 @@ async def start_web_server():
     app.router.add_get("/", handle)
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
 
+    # Добавляем обработчик on_shutdown ДО runner.setup()
+    app.on_shutdown.append(on_shutdown_handler)
+
     port = int(os.environ.get("PORT", 8000))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
     print(f"Web server started on port {port}")
-
-    app.on_shutdown.append(on_shutdown_handler)
 
     return app
 
