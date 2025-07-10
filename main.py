@@ -77,7 +77,7 @@ async def start_web_server():
     # Добавляем обработчик on_shutdown ДО runner.setup()
     app.on_shutdown.append(on_shutdown_handler)
 
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 443))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
