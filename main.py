@@ -79,7 +79,7 @@ async def start_web_server():
     app.on_shutdown.append(on_shutdown_handler)
 
     # Используем стандартный порт HTTPS (443)
-    port = int(os.environ.get("PORT", 443))
+    port = int(os.environ.get("PORT", 10000))  # Убедитесь, что порт соответствует 10000
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
