@@ -69,7 +69,8 @@ async def handle_webhook(request):
     logger.info("Webhook request received.")
     token_from_request = request.match_info.get('token')
     logger.debug(f"Received token: {token_from_request}")
-    
+
+    # Проверка, что токен из URL соответствует токену бота
     if token_from_request == bot.token:
         request_body = await request.text()
         update = Update.parse_raw(request_body)
