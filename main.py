@@ -79,8 +79,8 @@ async def handle_webhook(request):
         update = Update.parse_raw(request_body)
         
         try:
-            # Используем process_update для одного обновления
-            await dp.process_update(update)  # Обрабатываем одиночное обновление
+            # Используем feed для обновлений
+            await dp.feed(update)  # feed, а не process_update или process_updates
             logger.info("Received and processed update.")
             return web.Response(status=200)
         except Exception as e:
