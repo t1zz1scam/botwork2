@@ -80,8 +80,8 @@ async def handle_webhook(request):
         update = Update.parse_raw(request_body)
         
         try:
-            # Используем process_updates с передачей списка обновлений
-            await dp.process_updates([update])  # Здесь передаем список с одним обновлением
+            # Используем process_update для одного обновления
+            await dp.process_update(update)  # Передаем одно обновление, не список
             logger.info("Received and processed update.")
             return web.Response(status=200)
         except Exception as e:
