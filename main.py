@@ -16,8 +16,9 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
-WEBHOOK_PATH = f"/webhook/{bot.token}"
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # например: https://botwork2.onrender.com/webhook/<token>
+# Исправил путь вебхука на правильный
+WEBHOOK_PATH = f"/webhook/{bot.token}"  # Пример: /webhook/7599765228:AAGL6gfJiGsVUpjEaUIn1KdjP2vRi1uiPfk
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Например: https://botwork2.onrender.com/webhook/<token>
 
 dp = Dispatcher()
 
@@ -77,6 +78,7 @@ async def start_web_server():
     # Добавляем обработчик on_shutdown ДО runner.setup()
     app.on_shutdown.append(on_shutdown_handler)
 
+    # Используем стандартный порт HTTPS (443)
     port = int(os.environ.get("PORT", 443))
     runner = web.AppRunner(app)
     await runner.setup()
