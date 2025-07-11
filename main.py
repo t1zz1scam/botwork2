@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
-# Исправил путь вебхука на правильный
-WEBHOOK_PATH = f"/webhook/{bot.token}"  # Пример: /webhook/7599765228:AAGL6gfJiGsVUpjEaUIn1KdjP2vRi1uiPfk
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Например: https://botwork2.onrender.com/webhook/<token>
+# Установлен статический путь вебхука
+WEBHOOK_PATH = "/webhook"  # Пример: /webhook
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Например: https://botwork2.onrender.com/webhook
 
 dp = Dispatcher()
 
