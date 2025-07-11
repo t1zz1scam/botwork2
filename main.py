@@ -64,6 +64,7 @@ async def handle(request):
     return web.Response(text="OK")
 
 # Обработчик вебхуков Telegram
+# Обработчик вебхуков Telegram
 async def handle_webhook(request):
     logger.info("Webhook request received.")
     
@@ -79,8 +80,8 @@ async def handle_webhook(request):
         update = Update.parse_raw(request_body)
         
         try:
-            # Используем feed для обновлений
-            await dp.feed(update)  # feed, а не process_update или process_updates
+            # Используем process_update для правильной обработки
+            await dp.process_update(update)  # Это правильный метод в aiogram 3.x
             logger.info("Received and processed update.")
             return web.Response(status=200)
         except Exception as e:
