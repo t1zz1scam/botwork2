@@ -77,7 +77,9 @@ async def handle_webhook(request):
     if token_from_request == bot.token:
         request_body = await request.text()
         update = Update.parse_raw(request_body)
-        await dp.process_update(update)
+        
+        # Используем новый метод для обработки обновлений
+        await dp.process_update(update)  # Версия 3.x требует такого подхода
         logger.info("Received and processed update.")
         return web.Response(status=200)
     else:
