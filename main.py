@@ -67,27 +67,27 @@ async def handle(request):
 async def handle_webhook(request):
     logger.info("Webhook request received.")
     
-    # Логируем полный путь запроса, чтобы видеть, что передается
+    # Логируем полный путь запроса, чтобы увидеть, что передается
     logger.debug(f"Request path: {request.path}")
     
-    # Получаем токен из пути запроса
-    token_from_request = request.match_info.get('token')
-    logger.debug(f"Received token: {token_from_request}")
+    # Получаем тело запроса (если токен передается в теле)
+    request_body = await request.text()
+    logger.debug(f"Request body: {request_body}")
     
-    if token_from_request == bot.token:
-        request_body = await request.text()
+    # Парсим тело запроса на предмет токена
+    if bot.token in request_body:
         update = Update.parse_raw(request_body)
         await dp.process_update(update)
         logger.info("Received and processed update.")
         return web.Response(status=200)
     else:
-        logger.warning(f"Invalid token received: {token_from_request}")
+        logger.warning(f"Invalid token received.")
         return web.Response(status=403, text="Forbidden")
 
 async def start_web_server():
     app = web.Application()
     app.router.add_get("/", handle)
-    app.router.add_post(WEBHOOK_PATH + "/{token}", handle_webhook)  # Регистрируем токен как часть URL
+    app.router.add_post(WEBHOOK_PATH, handle_webhook)  # Регистрируем без токена в URL
 
     # Добавляем обработчик on_shutdown ДО runner.setup()
     app.on_shutdown.append(on_shutdown_handler)
