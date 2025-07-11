@@ -79,7 +79,7 @@ async def handle_webhook(request):
         update = Update.parse_raw(request_body)
         
         # Используем новый метод для обработки обновлений
-        await dp.process_update(update)  # Версия 3.x требует такого подхода
+        await dp.feed_update(update)  # Заменили process_update на feed_update в aiogram 3.x
         logger.info("Received and processed update.")
         return web.Response(status=200)
     else:
