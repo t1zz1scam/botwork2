@@ -11,6 +11,7 @@ ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
+    logger.debug("Start command received")  # Логирование, чтобы увидеть, что команда запускается
     async with AsyncSessionLocal() as session:
         user = await session.get(User, message.from_user.id)
         if not user:
