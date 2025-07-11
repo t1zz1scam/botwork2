@@ -78,10 +78,14 @@ async def handle_webhook(request):
         request_body = await request.text()
         update = Update.parse_raw(request_body)
         
-        # Используем новый метод для обработки обновлений
-        await dp.feed_update(update)  # Заменили process_update на feed_update в aiogram 3.x
-        logger.info("Received and processed update.")
-        return web.Response(status=200)
+        try:
+            # Используем правильный метод для обработки обновлений
+            await dp.process_update(update)
+            logger.info("Received and processed update.")
+            return web.Response(status=200)
+        except Exception as e:
+            logger.error(f"Error processing update: {e}")
+            return web.Response(status=500, text="Internal Server Error")
     else:
         logger.warning(f"Invalid token received.")
         return web.Response(status=403, text="Forbidden")
