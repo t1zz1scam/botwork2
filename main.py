@@ -16,8 +16,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
-# Установлен статический путь вебхука
-WEBHOOK_PATH = "/webhook"  # Пример: /webhook
+WEBHOOK_PATH = "/webhook"  # Путь для вебхука
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Например: https://botwork2.onrender.com/webhook
 
 dp = Dispatcher()
@@ -68,7 +67,10 @@ async def handle(request):
 async def handle_webhook(request):
     logger.info("Webhook request received.")
     
-    # Извлекаем токен из пути запроса
+    # Логируем полный путь запроса, чтобы видеть, что передается
+    logger.debug(f"Request path: {request.path}")
+    
+    # Получаем токен из пути запроса
     token_from_request = request.match_info.get('token')
     logger.debug(f"Received token: {token_from_request}")
     
@@ -85,7 +87,7 @@ async def handle_webhook(request):
 async def start_web_server():
     app = web.Application()
     app.router.add_get("/", handle)
-    app.router.add_post(WEBHOOK_PATH, handle_webhook)
+    app.router.add_post(WEBHOOK_PATH + "/{token}", handle_webhook)  # Регистрируем токен как часть URL
 
     # Добавляем обработчик on_shutdown ДО runner.setup()
     app.on_shutdown.append(on_shutdown_handler)
