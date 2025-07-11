@@ -37,18 +37,23 @@ async def show_main_menu(callback):
         await callback.message.edit_text("Главное меню:", reply_markup=kb)
 
 async def on_startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    scheduler.start()
-
-    # Устанавливаем вебхук
+    logger.info("Starting the bot...")
     try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables created successfully.")
+        scheduler.start()
+        logger.info("Scheduler started successfully.")
+        
+        # Устанавливаем вебхук
         await bot.set_webhook(WEBHOOK_URL)
         logger.info(f"Webhook set to {WEBHOOK_URL}")
     except Exception as e:
         logger.error(f"Failed to set webhook: {e}")
+        raise
 
 async def on_shutdown_handler(app):
+    logger.info("Shutting down the bot...")
     # Удаляем webhook и закрываем сессию
     await bot.delete_webhook()
     await bot.session.close()
@@ -56,18 +61,23 @@ async def on_shutdown_handler(app):
 
 # Проверка здоровья сервера
 async def handle(request):
+    logger.info("Health check request received.")
     return web.Response(text="OK")
 
 # Обработчик вебхуков Telegram
 async def handle_webhook(request):
-    if request.match_info.get('token') == bot.token:
+    logger.info("Webhook request received.")
+    token_from_request = request.match_info.get('token')
+    logger.debug(f"Received token: {token_from_request}")
+    
+    if token_from_request == bot.token:
         request_body = await request.text()
         update = Update.parse_raw(request_body)
         await dp.process_update(update)
         logger.info("Received and processed update.")
         return web.Response(status=200)
     else:
-        logger.warning("Invalid token received.")
+        logger.warning(f"Invalid token received: {token_from_request}")
         return web.Response(status=403, text="Forbidden")
 
 async def start_web_server():
@@ -89,6 +99,7 @@ async def start_web_server():
     return app
 
 async def main():
+    logger.info("Bot started.")
     await on_startup()
     await start_web_server()
     # Держим приложение живым
@@ -96,4 +107,5 @@ async def main():
         await asyncio.sleep(3600)
 
 if __name__ == "__main__":
+    logger.info("Running main loop.")
     asyncio.run(main())
